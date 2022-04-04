@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": ".//src//LightsController"
+		},
+		{
+			"path": ".//src//StairLight"
+		}
+	],
+	"settings": {
+		"editor.fontSize": 12
+	}
+}
