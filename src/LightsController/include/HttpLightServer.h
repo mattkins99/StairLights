@@ -6,9 +6,7 @@
 class HttpLightServer
 {
     public:
-        static WebServer * server;
-        static void SetupHttpRoutes();
-        static void GetStairs();
+        void SetupHttpRoutes();
 };
 
 #endif

@@ -13,6 +13,8 @@
 #include <HttpLightServer.h>
 #include <Stairs.h>
 #include <Credentials.h>
+#include <ElegantOTA.h>
+#include <HttpServer.h>
 
 using namespace httpsserver;
 
@@ -22,7 +24,9 @@ using namespace httpsserver;
 const char *StairParam = "Stair";
 const char *defaultStair = "";
 
+WebServer httpServer(80);
 SecureLightServer slServer;
+HttpLightServer lightServer;
 
 void setup() {
   // For logging
@@ -70,14 +74,20 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   slServer.setupSecureRoutes();
-  HttpLightServer::SetupHttpRoutes();  
+  lightServer.SetupHttpRoutes();  
+
+  // httpServer.on("/", []() {
+  //   httpServer.send(200, "text/plain", "Hi! I am ESP32.");
+  // });
+
+  ElegantOTA.begin(&HttpServer::server, otaUSERID, otaPASSWORD);
 }
 
 void loop() {
   try
   {
     slServer.secureServer->loop();
-    HttpLightServer::server->handleClient();
+    HttpServer::server.handleClient();
     delay(1);
   }
   catch(const std::exception& e)

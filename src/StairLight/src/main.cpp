@@ -4,10 +4,10 @@
 #include <EEPROM.h>
 #include <mdns.h>
 #include <Credentials.h>
+#include <WebServer.h>
+#include <ElegantOTA.h>
 
 #define EEPROM_SIZE 256
-#define WIFI_SSID wiFiSSID
-#define WIFI_PSK  wiFiPASSWORD
 
 const String light = "5";
 const int lightPin = 15;
@@ -16,6 +16,8 @@ HTTPClient http;
 volatile uint8_t lightState;
 volatile uint8_t errorCount;
 String uri;
+
+WebServer server(8080);
 
 void setup() {
   Serial.begin(9600);
@@ -31,7 +33,7 @@ void setup() {
 
   Serial.println("Connecting to WiFi."); 
   WiFi.setHostname("Stair5"); 
-  WiFi.begin(WIFI_SSID, WIFI_PSK);
+  WiFi.begin(wiFiSSID, wiFiPASSWORD);
   int connectionWaitLimitCounter = 0;
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -49,12 +51,19 @@ void setup() {
   Serial.println(WiFi.localIP());
   WiFi.dnsIP(WiFi.gatewayIP());
 
+  server.on("/", HTTP_GET, []() {
+    server.send(200, "text/plain", "I'm a stair, I don't talk much.");
+  });
+  ElegantOTA.begin(&server, otaUSERID, otaPASSWORD);  
+
   delay(2000);
 }
 
 void loop() {
   try
   {
+    server.handleClient();
+
     http.begin("192.168.0.160", 80, uri);
     int responseCode = http.GET();
     Serial.print("ResponseCode: ");
