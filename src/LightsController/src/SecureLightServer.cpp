@@ -161,47 +161,24 @@ void SecureLightServer::toggleStairs(HTTPRequest * req, HTTPResponse * res)
 
   if (userName != testUser && psw != testPwd)
   {
-    responseCode = 403; // Unauthorized
+    Serial.println("unauthorized caller");
+    responseCode = 403;
   }
   else
   { 
     Serial.print("Toggling stair ");
-    std::string stairNumber = "";
     ResourceParameters * params = req->getParams();
-    if (params->getQueryParameter(Stairs::StairParam, stairNumber))
+    std::string stairString;
+    if (params->getQueryParameter(Stairs::StairParam, stairString))
     {
-      Serial.println(stairNumber.c_str());
-      if (stairNumber == "0")
+      Serial.println(stairString.c_str());
+      
+      String s = stairString.c_str();
+      int stairInt = s.toInt();
+
+      if (stairInt < sizeof(Stairs::stairs))
       {
-        Stairs::stair0 = !Stairs::stair0;
-      }
-      else if (stairNumber == "1")
-      {
-        Stairs::stair1 = !Stairs::stair1;
-      }
-      else if (stairNumber == "2")
-      {
-        Stairs::stair2 = !Stairs::stair2;
-      }
-      else if (stairNumber == "3")
-      {
-        Stairs::stair3 = !Stairs::stair3;
-      }
-      else if (stairNumber == "4")
-      {
-        Stairs::stair4 = !Stairs::stair4;
-      }
-      else if (stairNumber == "5")
-      {
-        Stairs::stair5 = !Stairs::stair5;
-      }
-      else if (stairNumber == "6")
-      {
-        Stairs::stair6 = !Stairs::stair6;
-      }
-      else if (stairNumber == "7")
-      {
-        Stairs::stair7 = !Stairs::stair7;
+        Stairs::stairs[stairInt] = !Stairs::stairs[stairInt];
       }
       else
       {
@@ -211,14 +188,11 @@ void SecureLightServer::toggleStairs(HTTPRequest * req, HTTPResponse * res)
     else
     {
       Serial.println("all");
-      Stairs::stair0 = !Stairs::stair0;
-      Stairs::stair1 = !Stairs::stair1;
-      Stairs::stair2 = !Stairs::stair2;
-      Stairs::stair3 = !Stairs::stair3;
-      Stairs::stair4 = !Stairs::stair4;
-      Stairs::stair5 = !Stairs::stair5;
-      Stairs::stair6 = !Stairs::stair6;
-      Stairs::stair7 = !Stairs::stair7;
+
+      for (int x = 0; x < sizeof(Stairs::stairs); x++)
+      {
+        Stairs::stairs[x] = !Stairs::stairs[x];
+      }
     }
   }
 
