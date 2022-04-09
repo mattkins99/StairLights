@@ -4,12 +4,13 @@
 #include <EEPROM.h>
 #include <mdns.h>
 #include <Credentials.h>
-#include <WebServer.h>
-#include <ElegantOTA.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+#include <AsyncElegantOTA.h>
 
 #define EEPROM_SIZE 256
 
-const String light = "5";
+const String light = "6";
 const int lightPin = 15;
 
 HTTPClient http;
@@ -17,10 +18,10 @@ volatile uint8_t lightState;
 volatile uint8_t errorCount;
 String uri;
 
-WebServer server(8080);
+AsyncWebServer server(80);
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(lightPin, OUTPUT);
   digitalWrite(lightPin, LOW);
   lightState = LOW;
@@ -32,7 +33,7 @@ void setup() {
   uri += light;
 
   Serial.println("Connecting to WiFi."); 
-  WiFi.setHostname("Stair5"); 
+  WiFi.setHostname("Stair6"); 
   WiFi.begin(wiFiSSID, wiFiPASSWORD);
   int connectionWaitLimitCounter = 0;
   while (WiFi.status() != WL_CONNECTED) {
@@ -51,19 +52,19 @@ void setup() {
   Serial.println(WiFi.localIP());
   WiFi.dnsIP(WiFi.gatewayIP());
 
-  server.on("/", HTTP_GET, []() {
-    server.send(200, "text/plain", "I'm a stair, I don't talk much.");
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "text/plain", "I'm a stair, I don't talk much.");
   });
-  ElegantOTA.begin(&server, otaUSERID, otaPASSWORD);  
+  AsyncElegantOTA.begin(&server, otaUSERID, otaPASSWORD);  
+
+  server.begin();
 
   delay(2000);
 }
 
 void loop() {
   try
-  {
-    server.handleClient();
-
+  {  
     http.begin("192.168.0.160", 80, uri);
     int responseCode = http.GET();
     Serial.print("ResponseCode: ");
