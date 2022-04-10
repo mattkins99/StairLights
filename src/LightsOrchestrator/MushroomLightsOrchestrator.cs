@@ -4,23 +4,17 @@ namespace LightsOrchestrator
     using System.Timers;
     using Microsoft.Extensions.Logging;
 
-    public interface ILightsOrchestrator
-    {
-        Task SetupAsync();
-        Task ToggleLightsAsync(bool on);
-    }
-
-    public class StairlightsOrchestrator : Timer, ILightsOrchestrator
+    public class MushroomLightsOrchestrator : Timer, ILightsOrchestrator
     {
         private ILightStatusChecker statusChecker;
         private ISunsetTracker sunsetTracker;
         private ILightToggler lightToggler;
-        private ILogger<StairlightsOrchestrator> logger;
+        private ILogger<MushroomLightsOrchestrator> logger;
         private IConfiguration configs;
         private IDateProvider DateTime;
-        private ILightTypes stairLightType = new Stair();
+        private ILightTypes mushroomLightType = new Mushroom();
 
-        public StairlightsOrchestrator(ILightStatusChecker statusChecker, ILightToggler lightToggler, ISunsetTracker sunsetTracker, ILogger<StairlightsOrchestrator> logger, IConfiguration configs, IDateProvider dateProvider)
+        public MushroomLightsOrchestrator(ILightStatusChecker statusChecker, ILightToggler lightToggler, ISunsetTracker sunsetTracker, ILogger<MushroomLightsOrchestrator> logger, IConfiguration configs, IDateProvider dateProvider)
         {
             this.statusChecker = statusChecker;
             this.sunsetTracker = sunsetTracker;
@@ -33,13 +27,13 @@ namespace LightsOrchestrator
         public async Task SetupAsync()
         {
             logger.LogInformation("Setting up next light event.");
-            var timeToOn = (sunsetTracker.Today.SunsetLightsOn - this.DateTime.Now).TotalMilliseconds > 0 
-                ? sunsetTracker.Today.SunsetLightsOn - this.DateTime.Now
-                : sunsetTracker.Tomorrow.SunsetLightsOn - this.DateTime.Now;
+            var timeToOn = (sunsetTracker.Today.Sunset - this.DateTime.Now).TotalMilliseconds > 0 
+                ? sunsetTracker.Today.Sunset - this.DateTime.Now
+                : sunsetTracker.Tomorrow.Sunset - this.DateTime.Now;
 
-            var timeToOff = (sunsetTracker.Today.SunsetLightsOut - this.DateTime.Now).TotalMilliseconds > 0 
-                ? sunsetTracker.Today.SunsetLightsOut - this.DateTime.Now
-                : sunsetTracker.Tomorrow.SunsetLightsOut - this.DateTime.Now;
+            var timeToOff = (sunsetTracker.Today.Sunrise - this.DateTime.Now).TotalMilliseconds > 0 
+                ? sunsetTracker.Today.Sunrise - this.DateTime.Now
+                : sunsetTracker.Tomorrow.Sunrise - this.DateTime.Now;
 
             bool lightsOn = timeToOn < timeToOff; 
             TimeSpan nextEvent = lightsOn 
@@ -66,9 +60,9 @@ namespace LightsOrchestrator
             logger.LogInformation("Turning lights {lightsOnString}", lightsOnString);
             foreach (var light in configs.ControlledLights) 
             {
-                if (on != await statusChecker.IsLightOnAsync(stairLightType, light))
+                if (on != await statusChecker.IsLightOnAsync(mushroomLightType, light))
                 {
-                    await this.lightToggler.ToggleLightsAsync(stairLightType, light);
+                    await this.lightToggler.ToggleLightsAsync(mushroomLightType, light);
                 }
                 else
                 {

@@ -28,7 +28,7 @@ namespace LightsTester
         {
             var mockHandler = GetMockMessageHandler(HttpStatusCode.OK, "On");
             LightStatusChecker statusChecker = new LightStatusChecker(new Configuration(), GetMockLogger().Object, mockHandler.Object, new Mock<IMetrics>().Object);
-            bool response = await statusChecker.IsLightOnAsync(1);
+            bool response = await statusChecker.IsLightOnAsync(new Stair(), 1);
 
             Assert.AreEqual(true, response, "Light not on as expected");
             mockHandler.Verify();
@@ -39,7 +39,7 @@ namespace LightsTester
         {
             var mockHandler = GetMockMessageHandler(HttpStatusCode.OK, "Off");
             LightStatusChecker statusChecker = new LightStatusChecker(new Configuration(), GetMockLogger().Object, mockHandler.Object, new Mock<IMetrics>().Object);
-            bool response = await statusChecker.IsLightOnAsync(1);
+            bool response = await statusChecker.IsLightOnAsync(new Stair(), 1);
 
             Assert.AreEqual(false, response, "Light not off as expected");
             mockHandler.Verify();
@@ -50,7 +50,7 @@ namespace LightsTester
         {
             var mockHandler = GetMockMessageHandler(HttpStatusCode.OK, "invalid");
             LightStatusChecker statusChecker = new LightStatusChecker(new Configuration(), GetMockLogger().Object, mockHandler.Object, new Mock<IMetrics>().Object);
-            bool response = await statusChecker.IsLightOnAsync(1);
+            bool response = await statusChecker.IsLightOnAsync(new Stair(), 1);
 
             Assert.AreEqual(false, response, "Light not off as expected");
             mockHandler.Verify();
@@ -63,7 +63,7 @@ namespace LightsTester
             LightStatusChecker statusChecker = new LightStatusChecker(new Configuration(), GetMockLogger().Object, mockHandler.Object, new Mock<IMetrics>().Object);
             statusChecker.LightStatusStates[1] = true;
 
-            bool response = await statusChecker.IsLightOnAsync(1);
+            bool response = await statusChecker.IsLightOnAsync(new Stair(), 1);
 
             Assert.AreEqual(true, response, "Light was not on as expected.");
         }
@@ -75,7 +75,7 @@ namespace LightsTester
             LightStatusChecker statusChecker = new LightStatusChecker(new Configuration(), GetMockLogger().Object, mockHandler.Object, new Mock<IMetrics>().Object);
             statusChecker.LightStatusStates[1] = false;
 
-            bool response = await statusChecker.IsLightOnAsync(1);
+            bool response = await statusChecker.IsLightOnAsync(new Stair(), 1);
 
             Assert.AreEqual(false, response, "Light was not off as expected.");
         }
@@ -88,7 +88,7 @@ namespace LightsTester
             .ReturnsAsync(() => { throw new SocketException(1); });
             LightStatusChecker statusChecker = new LightStatusChecker(new Configuration(), GetMockLogger().Object, mockHandler.Object, new Mock<IMetrics>().Object);
 
-            await Assert.ThrowsExceptionAsync<ApplicationException>(() => statusChecker.IsLightOnAsync(1), "Expected execption not thrown");
+            await Assert.ThrowsExceptionAsync<ApplicationException>(() => statusChecker.IsLightOnAsync(new Stair(), 1), "Expected execption not thrown");
         }
 
         private Mock<ILogger<LightStatusChecker>> GetMockLogger()

@@ -7,7 +7,7 @@ namespace LightsOrchestrator
 
     public interface ILightToggler
     {
-        Task ToggleLightsAsync(int? light = null);
+        Task ToggleLightsAsync(ILightTypes lightType, int? light = null);
     }
 
     public class LightToggler : ILightToggler
@@ -29,12 +29,11 @@ namespace LightsOrchestrator
             this.handler.ServerCertificateCustomValidationCallback += (a, b, c, d) => true;
         }
 
-        public async Task ToggleLightsAsync(int? light = null)
+        public async Task ToggleLightsAsync(ILightTypes lightType, int? light = null)
         {
-            var result = await this.CallToggleApiAsync(light);
+            var result = await this.CallToggleApiAsync(lightType, light);
 
             var statusCode = result.StatusCode;
-            // var responseBody = await result.Content.ReadAsStringAsync();
 
             if (statusCode == HttpStatusCode.OK)
             {
@@ -49,10 +48,10 @@ namespace LightsOrchestrator
             }
         }
 
-        private async Task<HttpResponseMessage> CallToggleApiAsync(int? light = null)
+        private async Task<HttpResponseMessage> CallToggleApiAsync(ILightTypes lightType, int? light = null)
         {
             metrics.TrackMetric($"{nameof(LightToggler)}_ToggleLight", 1);
-            var uri = string.Format($"{configs.BaseLightPostUri}{configs.StairsControllerPath}{(light == null ? "" : $"?{configs.StairParam}={light}")}");
+            var uri = string.Format($"{configs.BaseLightPostUri}{lightType.Controller}{(light == null ? "" : $"?{lightType.Entity}={light}")}");
             logger.LogTrace("Calling: POST {uri}", uri);
             HttpClient client = new HttpClient(handler);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, uri);

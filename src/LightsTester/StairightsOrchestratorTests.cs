@@ -86,7 +86,7 @@ namespace LightsTester
             Mock<ILightStatusChecker> mock = new Mock<ILightStatusChecker>();
             foreach(var lightState in lightStates)
             {
-                mock.Setup(x => x.IsLightOnAsync(lightState.Key)).Returns(Task.FromResult(lightState.Value));
+                mock.Setup(x => x.IsLightOnAsync(new Stair(), lightState.Key)).Returns(Task.FromResult(lightState.Value));
             }
 
             return mock;
@@ -98,7 +98,7 @@ namespace LightsTester
             Mock<ILightToggler> mock = new Mock<ILightToggler>();
             foreach(var lightToggle in lightToggles)
             {
-                mock.Setup(x => x.ToggleLightsAsync(lightToggle.Key)).Returns(() => 
+                mock.Setup(x => x.ToggleLightsAsync(new Stair(), lightToggle.Key)).Returns(() => 
                 {
                     if (lightToggle.Value is not null)
                     {

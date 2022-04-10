@@ -6,7 +6,7 @@ namespace LightsOrchestrator
 
     public interface ILightStatusChecker
     {
-        Task<bool> IsLightOnAsync(int light);
+        Task<bool> IsLightOnAsync(ILightTypes lightType, int light);
     }
 
     public class LightStatusChecker : ILightStatusChecker
@@ -28,7 +28,7 @@ namespace LightsOrchestrator
             LightStatusStates = new Dictionary<int, bool>();
         }
 
-        public async Task<bool> IsLightOnAsync(int light)
+        public async Task<bool> IsLightOnAsync(ILightTypes lightType, int light)
         {
             if (!LightStatusStates.ContainsKey(light))
             {
@@ -36,7 +36,7 @@ namespace LightsOrchestrator
                 LightStatusStates[light] = false;
             }
 
-            var result = await this.CallLightStatus(light);
+            var result = await this.CallLightStatus(lightType, light);
 
             var statusCode = result.StatusCode;
             var responseBody = await result.Content?.ReadAsStringAsync();
@@ -66,9 +66,9 @@ namespace LightsOrchestrator
             return LightStatusStates[light];
         }
 
-        private async Task<HttpResponseMessage> CallLightStatus(int light)
+        private async Task<HttpResponseMessage> CallLightStatus(ILightTypes lightType, int light)
         {
-            var uri = string.Format($"{configs.BaseLightGetUri}{configs.StairsControllerPath}?{configs.StairParam}={light}");
+            var uri = string.Format($"{configs.BaseLightGetUri}{lightType.Controller}?{lightType.Entity}={light}");
             logger.LogTrace("Calling: GET {uri}", uri);
             httpClient = httpClient ?? new HttpClient(this.handler);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);

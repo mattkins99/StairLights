@@ -13,9 +13,14 @@
             try
             {
                 RegisterTypes();
-                ILightsOrchestrator orchestrator = container.GetService<ILightsOrchestrator>();
-                await orchestrator.SetupAsync();
-                
+                List<ILightsOrchestrator> orchestratorCollection = new List<ILightsOrchestrator>();
+                orchestratorCollection.Add(container.GetService<StairlightsOrchestrator>());
+                orchestratorCollection.Add(container.GetService<MushroomLightsOrchestrator>());
+                foreach(ILightsOrchestrator orchestrator in orchestratorCollection)
+                {
+                    await orchestrator.SetupAsync();
+                }
+
                 await Task.Delay(-1);
             }
             catch (Exception e)
@@ -34,7 +39,8 @@
                 .AddSingleton<LightTogglerFactory>()
                 .AddSingleton<ISunsetTracker, SunsetTracker>()
                 .AddSingleton<IMetrics, AppInsightsMetricProvider>()
-                .AddSingleton<ILightsOrchestrator, StairlightsOrchestrator>()
+                .AddSingleton<StairlightsOrchestrator>()
+                .AddSingleton<MushroomLightsOrchestrator>()
                 .AddTransient<HttpClientHandler>()
                 .AddSingleton<IDateProvider, DateProvider>()
                 .AddTransient<Results>()
