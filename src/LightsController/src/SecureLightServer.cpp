@@ -46,6 +46,10 @@ void SecureLightServer::setupSecureRoutes()
   ResourceNode * getToggleStairsNode = new ResourceNode("/api/stairs", "POST", &toggleStairs);
   secureServer->registerNode(getToggleStairsNode);
 
+  ResourceNode * getToggleMushroomsNode = new ResourceNode("/api/mushrooms", "POST", &toggleMushrooms);
+  secureServer->registerNode(getToggleMushroomsNode);
+
+
   Serial.println("Starting server...");
   secureServer->start();
   if (secureServer->isRunning()) {
@@ -192,6 +196,61 @@ void SecureLightServer::toggleStairs(HTTPRequest * req, HTTPResponse * res)
       for (int x = 0; x < sizeof(Stairs::stairs); x++)
       {
         Stairs::stairs[x] = !Stairs::stairs[x];
+      }
+    }
+  }
+
+  res->setStatusCode(responseCode);
+  res->setHeader("Content-Type", "text/plain");
+  res->println("");
+}
+
+void SecureLightServer::toggleMushrooms(HTTPRequest * req, HTTPResponse * res)
+{
+  int responseCode = 200;
+  Serial.println("ToggleMushrooms called"); 
+ 
+  std::string userName = req->getBasicAuthUser();
+  std::string psw = req->getBasicAuthPassword();
+ 
+  Serial.print("User: ");
+  Serial.println(userName.c_str());
+  Serial.print("pwd Len: ");
+  Serial.println(psw.length());
+
+  if (userName != testUser && psw != testPwd)
+  {
+    Serial.println("unauthorized caller");
+    responseCode = 403;
+  }
+  else
+  { 
+    Serial.print("Toggling mushroom ");
+    ResourceParameters * params = req->getParams();
+    std::string mushString;
+    if (params->getQueryParameter(Stairs::MushParam, mushString))
+    {
+      Serial.println(mushString.c_str());
+      
+      String s = mushString.c_str();
+      int mushInt = s.toInt();
+
+      if (mushInt < sizeof(Stairs::mushrooms))
+      {
+        Stairs::mushrooms[mushInt] = !Stairs::mushrooms[mushInt];
+      }
+      else
+      {
+        responseCode = 404;
+      }
+    }
+    else
+    {
+      Serial.println("all");
+
+      for (int x = 0; x < sizeof(Stairs::mushrooms); x++)
+      {
+        Stairs::mushrooms[x] = !Stairs::mushrooms[x];
       }
     }
   }

@@ -23,6 +23,7 @@ class SecureLightServer
         void setupSecureRoutes();
         SSLCert * getCertificate();
         static void toggleStairs(HTTPRequest * req, HTTPResponse * res);
+        static void toggleMushrooms(HTTPRequest * req, HTTPResponse * res);
 };
 
 #endif

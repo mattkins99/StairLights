@@ -41,6 +41,39 @@ void HttpLightServer::SetupHttpRoutes()
     HttpServer::server.send(responseCode, "text/plain", response);  
   });
 
+  HttpServer::server.on("/api/mushrooms", HTTP_GET, []() 
+  { 
+    int responseCode = 200;
+    String response = "";
+    String mushroomNumber = "";
+    if (HttpServer::server.hasArg(Stairs::MushParam))
+    {
+      std::string ipAddress = HttpServer::server.client().remoteIP().toString().c_str();
+
+      mushroomNumber = HttpServer::server.arg(Stairs::MushParam);        
+      if (clientTracker.find(ipAddress) == clientTracker.end())
+      {
+        Serial.print("New mushroom Client: ");
+        Serial.print(ipAddress.c_str());
+        Serial.print(" Mushroom: ");
+        Serial.println(mushroomNumber);
+        clientTracker.insert(ipAddress);
+      }
+      
+      int mushInt = mushroomNumber.toInt();
+      if (mushInt < sizeof(Stairs::mushrooms))
+      {
+        response = Stairs::mushrooms[mushInt] ? "On" : "Off";
+      }
+      else
+      {
+        responseCode = 404;
+      }
+    }
+
+    HttpServer::server.send(responseCode, "text/plain", response);  
+  });
+
 
   HttpServer::server.begin();
 }
