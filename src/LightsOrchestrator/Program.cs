@@ -32,6 +32,8 @@
 
         public static void RegisterTypes()
         {
+            string appInsightsAppId = new Configuration().ApplicationInsightsId;
+
             IServiceCollection serviceCollection = new ServiceCollection()
                 .AddSingleton<IConfiguration, Configuration>()
                 .AddSingleton<ILightStatusChecker, LightStatusChecker>()
@@ -47,12 +49,12 @@
                 .AddSingleton<ILoggerFactory, LoggerFactory>()
                 .AddLogging(logging =>
                 {
-                    logging.AddFilter<ApplicationInsightsLoggerProvider>("Category", LogLevel.Trace);
+                    logging.AddFilter<ApplicationInsightsLoggerProvider>("", LogLevel.Trace);
+                    logging.AddApplicationInsights(appInsightsAppId);
                     logging.AddConsole();
                     logging.SetMinimumLevel(LogLevel.Trace);
-                    logging.AddApplicationInsights(new Configuration().ApplicationInsightsId);
                 })
-                .AddApplicationInsightsTelemetryWorkerService(new Configuration().ApplicationInsightsId);                
+                .AddApplicationInsightsTelemetryWorkerService(appInsightsAppId);                
 
             container = serviceCollection.BuildServiceProvider();
         }
