@@ -14,7 +14,7 @@
             {
                 RegisterTypes();
                 ILightsOrchestrator orchestrator = container.GetService<ILightsOrchestrator>();
-                orchestrator.Start();
+                await orchestrator.SetupAsync();
                 
                 await Task.Delay(-1);
             }
@@ -34,8 +34,9 @@
                 .AddSingleton<LightTogglerFactory>()
                 .AddSingleton<ISunsetTracker, SunsetTracker>()
                 .AddSingleton<IMetrics, AppInsightsMetricProvider>()
-                .AddSingleton<ILightsOrchestrator, LightsOrchestrator2>()
+                .AddSingleton<ILightsOrchestrator, StairlightsOrchestrator>()
                 .AddTransient<HttpClientHandler>()
+                .AddSingleton<IDateProvider, DateProvider>()
                 .AddTransient<Results>()
                 .AddSingleton<ILoggerFactory, LoggerFactory>()
                 .AddLogging(logging =>

@@ -91,9 +91,9 @@ namespace LightsTester
             await Assert.ThrowsExceptionAsync<ApplicationException>(() => statusChecker.IsLightOnAsync(1), "Expected execption not thrown");
         }
 
-        private Mock<ILogger<LightsOrchestrator>> GetMockLogger()
+        private Mock<ILogger<LightStatusChecker>> GetMockLogger()
         {
-            Mock<ILogger<LightsOrchestrator>> mockLogger = new Mock<ILogger<LightsOrchestrator>>();
+            Mock<ILogger<LightStatusChecker>> mockLogger = new Mock<ILogger<LightStatusChecker>>();
             return mockLogger;
         }
 

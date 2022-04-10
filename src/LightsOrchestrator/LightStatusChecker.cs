@@ -12,14 +12,14 @@ namespace LightsOrchestrator
     public class LightStatusChecker : ILightStatusChecker
     {
         IConfiguration configs;
-        ILogger<LightsOrchestrator> logger;
+        ILogger<LightStatusChecker> logger;
         HttpClientHandler handler;
         IMetrics metrics;
         private HttpClient httpClient = null;
 
         public Dictionary<int, bool> LightStatusStates;
 
-        public LightStatusChecker(IConfiguration configs, ILogger<LightsOrchestrator> logger, HttpClientHandler handler, IMetrics metrics)
+        public LightStatusChecker(IConfiguration configs, ILogger<LightStatusChecker> logger, HttpClientHandler handler, IMetrics metrics)
         {
             this.configs = configs;
             this.logger = logger;
