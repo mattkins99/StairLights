@@ -73,7 +73,7 @@ namespace LightsOrchestrator
                 else
                 {
                     var stateString = on ? "On" : "Off";
-                    logger.LogTrace("Light {light} is already {stateString}}.", light, stateString);
+                    logger.LogTrace("Light {light} is already {stateString}.", light, stateString);
                 }
             }
 

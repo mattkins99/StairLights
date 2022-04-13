@@ -78,7 +78,7 @@ SSLCert * SecureLightServer::getCertificate() {
     // case, it's esp32.local.
     // However, as the certificate is self-signed, your browser won't trust the server
     // anyway.
-    int res = createSelfSignedCert(*newCert, KEYSIZE_1024, "CN=192.168.0.160,O=acme,C=DE");
+    int res = createSelfSignedCert(*newCert, KEYSIZE_512, "CN=test,O=acme,C=DE");
     if (res == 0) {
       // We now have a certificate. We store it on the SPIFFS to restore it on next boot.
 

@@ -74,12 +74,7 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   slServer.setupSecureRoutes();
-  lightServer.SetupHttpRoutes();  
-
-  // httpServer.on("/", []() {
-  //   httpServer.send(200, "text/plain", "Hi! I am ESP32.");
-  // });
-
+  lightServer.SetupHttpRoutes();
   ElegantOTA.begin(&HttpServer::server, otaUSERID, otaPASSWORD);
 }
 
