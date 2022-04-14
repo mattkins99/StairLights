@@ -7,7 +7,7 @@ namespace LightsOrchestrator
 
     public interface ILightToggler
     {
-        Task ToggleLightsAsync(ILightTypes lightType, int? light = null);
+        void ToggleLights(ILightTypes lightType, int? light = null);
     }
 
     public class LightToggler : ILightToggler
@@ -29,9 +29,9 @@ namespace LightsOrchestrator
             this.handler.ServerCertificateCustomValidationCallback += (a, b, c, d) => true;
         }
 
-        public async Task ToggleLightsAsync(ILightTypes lightType, int? light = null)
+        public async void ToggleLights(ILightTypes lightType, int? light = null)
         {
-            var result = await this.CallToggleApiAsync(lightType, light);
+            var result = this.CallToggleApi(lightType, light);
 
             var statusCode = result.StatusCode;
 
@@ -48,7 +48,7 @@ namespace LightsOrchestrator
             }
         }
 
-        private async Task<HttpResponseMessage> CallToggleApiAsync(ILightTypes lightType, int? light = null)
+        private HttpResponseMessage CallToggleApi(ILightTypes lightType, int? light = null)
         {
             metrics.TrackMetric($"{nameof(LightToggler)}_ToggleLight", 1);
             var uri = string.Format($"{configs.BaseLightPostUri}{lightType.Controller}{(light == null ? "" : $"?{lightType.Entity}={light}")}");
@@ -61,14 +61,15 @@ namespace LightsOrchestrator
             Stopwatch sw = Stopwatch.StartNew();
             try
             {
-                result = await client.SendAsync(request);
-                metrics.TrackDependency(nameof(LightsOrchestrator), nameof(LightToggler), nameof(CallToggleApiAsync), sw.Elapsed, true);
+                // POST cannot be async as it uses SSL and overloads the ESP32.
+                result = client.Send(request);
+                metrics.TrackDependency(nameof(LightsOrchestrator), nameof(LightToggler), nameof(CallToggleApi), sw.Elapsed, true);
             }
             catch (Exception e)
             {
                 logger.LogError(e, "Error calling Light Toggler API. Type: {e.GetType()} Message: {e.Message}", e.GetType(), e.Message);
-                metrics.TrackException(e, nameof(LightsOrchestrator), nameof(LightToggler), nameof(CallToggleApiAsync));
-                metrics.TrackDependency(nameof(LightsOrchestrator), nameof(LightToggler), nameof(CallToggleApiAsync), sw.Elapsed, false);
+                metrics.TrackException(e, nameof(LightsOrchestrator), nameof(LightToggler), nameof(CallToggleApi));
+                metrics.TrackDependency(nameof(LightsOrchestrator), nameof(LightToggler), nameof(CallToggleApi), sw.Elapsed, false);
                 throw new ApplicationException($"Error calling Light Toggler API. Type: {e.GetType()} Message: {e.Message}", e);
             }
             return result;

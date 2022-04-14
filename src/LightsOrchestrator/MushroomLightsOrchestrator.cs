@@ -62,12 +62,12 @@ namespace LightsOrchestrator
             {
                 if (on != await statusChecker.IsLightOnAsync(mushroomLightType, light))
                 {
-                    await this.lightToggler.ToggleLightsAsync(mushroomLightType, light);
+                    this.lightToggler.ToggleLights(mushroomLightType, light);
                 }
                 else
                 {
                     var stateString = on ? "On" : "Off";
-                    logger.LogTrace("Light {light} is already {stateString}}.", light, stateString);
+                    logger.LogTrace("Light {light} is already {stateString}.", light, stateString);
                 }
             }
 

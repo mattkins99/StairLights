@@ -49,6 +49,7 @@ namespace LightsOrchestrator
             logger.LogInformation("Lights to be turned {lightsOnString} in {nextEvent.TotalMinutes} minutes", lightsOnString, nextEvent.TotalMinutes);  
             this.Elapsed += async (s, e) => await ElapsedAsync(s, e, lightsOn);
             this.Interval = nextEvent.TotalMilliseconds;
+            //this.Interval = TimeSpan.FromMinutes(1).TotalMilliseconds; // live testing
 
             this.Enabled = true;
             this.AutoReset = false;
@@ -68,7 +69,7 @@ namespace LightsOrchestrator
             {
                 if (on != await statusChecker.IsLightOnAsync(stairLightType, light))
                 {
-                    await this.lightToggler.ToggleLightsAsync(stairLightType, light);
+                    this.lightToggler.ToggleLights(stairLightType, light);
                 }
                 else
                 {

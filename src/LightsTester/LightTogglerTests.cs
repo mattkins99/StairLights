@@ -27,7 +27,7 @@ namespace LightsTester
         {
             var mockHandler = GetMockMessageHandler(HttpStatusCode.OK, "On");
             LightToggler toggler = new LightToggler(new Configuration(), GetMockLogger().Object, mockHandler.Object, new Mock<IMetrics>().Object);
-            await toggler.ToggleLightsAsync(new Stair(), 1);            
+            toggler.ToggleLights(new Stair(), 1);            
             mockHandler.Verify();
         }
 
@@ -40,7 +40,7 @@ namespace LightsTester
         private Mock<HttpClientHandler> GetMockMessageHandler(HttpStatusCode statusCode, string content)
         {
             var mockHandler = new Mock<HttpClientHandler>();
-            mockHandler.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            mockHandler.Protected().Setup<Task<HttpResponseMessage>>("Send", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage()
             {
                 StatusCode = statusCode,

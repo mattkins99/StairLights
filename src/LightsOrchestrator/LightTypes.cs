@@ -9,14 +9,14 @@ namespace LightsOrchestrator
 
     public class Stair : ILightTypes
     {
-        public string Controller { get; } = "/api/Stairs";
+        public string Controller { get; } = "/api/stairs";
 
-        public string Entity { get; } = "stair";
+        public string Entity { get; } = "Stair";
     }
 
     public class Mushroom : ILightTypes
     {
-        public string Controller { get; } = "/api/Stairs";
+        public string Controller { get; } = "/api/mushroom";
 
         public string Entity { get; } = "mush";
     }

@@ -4,6 +4,7 @@
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Logging.ApplicationInsights;
+    using Microsoft.Extensions.Logging.EventLog;
 
     public class Program
     {
@@ -52,6 +53,11 @@
                     logging.AddFilter<ApplicationInsightsLoggerProvider>("", LogLevel.Trace);
                     logging.AddApplicationInsights(appInsightsAppId);
                     logging.AddConsole();
+                    logging.AddEventLog(x => 
+                    {
+                        x.LogName = nameof(LightsOrchestrator);
+                        x.SourceName = nameof(LightsOrchestrator);
+                    });
                     logging.SetMinimumLevel(LogLevel.Trace);
                 })
                 .AddApplicationInsightsTelemetryWorkerService(appInsightsAppId);                

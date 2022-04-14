@@ -98,13 +98,12 @@ namespace LightsTester
             Mock<ILightToggler> mock = new Mock<ILightToggler>();
             foreach(var lightToggle in lightToggles)
             {
-                mock.Setup(x => x.ToggleLightsAsync(new Stair(), lightToggle.Key)).Returns(() => 
+                mock.Setup(x => x.ToggleLights(new Stair(), lightToggle.Key)).Callback(() => 
                 {
                     if (lightToggle.Value is not null)
                     {
                         throw lightToggle.Value;
                     }
-                    return Task.CompletedTask;
                 });
             }
 

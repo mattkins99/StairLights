@@ -43,7 +43,7 @@ namespace LightsOrchestrator
 
         public int ControlledLight { get; set; } = 2;
 
-        public List<int> ControlledLights { get; set; } = new List<int> {0, 1, 2, 3, 4, 5, 6, 7 };
+        public List<int> ControlledLights { get; set; } = new List<int> {1, 2, 3 };
 
         public TimeSpan Delay { get; set; } = TimeSpan.FromSeconds(1);
 
