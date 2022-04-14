@@ -16,7 +16,7 @@ namespace LightsOrchestrator
 
     public class Mushroom : ILightTypes
     {
-        public string Controller { get; } = "/api/mushroom";
+        public string Controller { get; } = "/api/mushrooms";
 
         public string Entity { get; } = "mush";
     }
