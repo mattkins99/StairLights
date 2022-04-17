@@ -22,6 +22,7 @@ namespace LightsOrchestrator.Sunset
         public DailySettings todayCache;
 
         public DailySettings tomorrowCache;
+        HttpClientHandler handler;
 
         public DailySettings Today 
         {
@@ -63,39 +64,47 @@ namespace LightsOrchestrator.Sunset
 
         private async Task<DailySettings> RefreshDailySettingsAsync(DateTime date)
         {
-            var result = await this.CallSunsetAPIAsync(date);
-
-            var statusCode = result.StatusCode;
-            var responseBody = await result.Content?.ReadAsStringAsync();
-
-            if (statusCode == HttpStatusCode.OK)
+            try
             {
-                logger.LogTrace("Call successful: {responseBody}", responseBody);
-                Root response;                
-                try
+                var result = await this.CallSunsetAPIAsync(date);
+
+                var statusCode = result.StatusCode;
+                var responseBody = await result.Content?.ReadAsStringAsync();
+
+                if (statusCode == HttpStatusCode.OK)
                 {
-                    response = JsonConvert.DeserializeObject<Root>(responseBody);
-                    if (response is not null)
+                    logger.LogTrace("Call successful: {responseBody}", responseBody);
+                    Root response;                
+                    try
                     {
-                        metrics.TrackMetric($"{nameof(SunsetTracker)}_GetSunsetSuccess", 1);
-                        return new DailySettings(response.results, configs);
+                        response = JsonConvert.DeserializeObject<Root>(responseBody);
+                        if (response is not null)
+                        {
+                            metrics.TrackMetric($"{nameof(SunsetTracker)}_GetSunsetSuccess", 1);
+                            return new DailySettings(response.results, configs);
+                        }
                     }
+                    catch (Exception e)
+                    {
+                        logger.LogError(e, "Error deserializing sunset response.  Body: {responseBody}", responseBody);
+                        metrics.TrackException(e, nameof(LightsOrchestrator), nameof(SunsetTracker), nameof(GetSunsetAsync));
+                        throw new ApplicationException("Sunset deserialization error", e);
+                    }
+                    
+                    logger.LogError("Sunset API response value is null");
+                    metrics.TrackMetric($"{nameof(SunsetTracker)}_GetSunsetCallFailure", 1);
                 }
-                catch (Exception e)
+                else
                 {
-                    logger.LogError(e, "Error deserializing sunset response.  Body: {responseBody}", responseBody);
-                    metrics.TrackException(e, nameof(LightsOrchestrator), nameof(SunsetTracker), nameof(GetSunsetAsync));
-                    throw new ApplicationException("Sunset deserialization error", e);
+                    logger.LogError("ResponseCode: {statusCode} Body: {responseBody}", statusCode, responseBody);
+                    metrics.TrackMetric($"{nameof(SunsetTracker)}_GetSunsetCallFailure", 1);
                 }
-                
-                logger.LogError("Sunset API response value is null");
-                metrics.TrackMetric($"{nameof(SunsetTracker)}_GetSunsetBadData", 1);
             }
-            else
+            catch (Exception e)
             {
-                logger.LogError("ResponseCode: {statusCode} Body: {responseBody}", statusCode, responseBody);
-                metrics.TrackMetric($"{nameof(SunsetTracker)}_GetSunsetResponseCodeFailure", 1);
-            }            
+                logger.LogError(e, "Error making call to sunset data API");
+                metrics.TrackMetric($"{nameof(SunsetTracker)}_GetSunsetCallFailure", 1);
+            }        
             
             throw new ApplicationException("Unable to get Sunset data");
         }
@@ -103,27 +112,50 @@ namespace LightsOrchestrator.Sunset
 
         private async Task<HttpResponseMessage> CallSunsetAPIAsync(DateTime date)
         {
-            metrics.TrackMetric($"{nameof(SunsetTracker)}_GetSunset", 1);
-            var uri = string.Format($"{configs.SunsetGetUri}{date.ToString("yyyy-MM-dd")}");
-            logger.LogTrace("Calling: GET {uri}", uri);
-            HttpClient client = new HttpClient();
-            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
-            HttpResponseMessage result;
-            var start = DateTime.Now;
-            Stopwatch sw = Stopwatch.StartNew();
-            try
+            this.handler = null;
+            while (true)
             {
-                result = await client.SendAsync(request);
-                metrics.TrackDependency(nameof(LightsOrchestrator), nameof(SunsetTracker), nameof(CallSunsetAPIAsync), sw.Elapsed, true);
+                metrics.TrackMetric($"{nameof(SunsetTracker)}_GetSunset", 1);
+                var uri = string.Format($"{configs.SunsetGetUri}{date.ToString("yyyy-MM-dd")}");
+                logger.LogTrace("Calling: GET {uri}", uri);
+                HttpClient client = handler is null 
+                    ? new HttpClient()
+                    : new HttpClient(handler);
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
+                HttpResponseMessage result;
+                var start = DateTime.Now;
+                Stopwatch sw = Stopwatch.StartNew();
+                try
+                {
+                    result = await client.SendAsync(request);
+                    metrics.TrackDependency(nameof(LightsOrchestrator), nameof(SunsetTracker), nameof(CallSunsetAPIAsync), sw.Elapsed, true);
+                }
+                catch (HttpRequestException hre)
+                {
+                    if (hre.Message == "The SSL connection could not be established, see inner exception.")
+                    {
+                        logger.LogWarning(hre, "SSL error making call to sunset data API");
+                        metrics.TrackMetric($"{nameof(SunsetTracker)}_GetSunsetCallFailure", 1);
+
+                        this.handler = new HttpClientHandler();
+                        this.handler.ServerCertificateCustomValidationCallback += (a, b, c, d) => true;
+                        continue;
+                    }
+                    
+                    logger.LogError(hre, "Http Error making call to sunset data API");
+                    metrics.TrackMetric($"{nameof(SunsetTracker)}_GetSunsetCallFailure", 1);                    
+                    throw new ApplicationException($"Error calling Sunset API. Type: {hre.GetType()} Message: {hre.Message}", hre);
+                }
+                catch (Exception e)
+                {
+                    logger.LogError(e, "Error calling Sunset API. Type: {e.GetType()} Message: {e.Message}", e.GetType(), e.Message);
+                    metrics.TrackException(e, nameof(LightsOrchestrator), nameof(SunsetTracker), nameof(CallSunsetAPIAsync));
+                    metrics.TrackMetric($"{nameof(SunsetTracker)}_GetSunsetCallFailure", 1);
+                    metrics.TrackDependency(nameof(LightsOrchestrator), nameof(SunsetTracker), nameof(CallSunsetAPIAsync), sw.Elapsed, false);
+                    throw new ApplicationException($"Error calling Sunset API. Type: {e.GetType()} Message: {e.Message}", e);
+                }
+                return result;
             }
-            catch (Exception e)
-            {
-                logger.LogError(e, "Error calling Sunset API. Type: {e.GetType()} Message: {e.Message}", e.GetType(), e.Message);
-                metrics.TrackException(e, nameof(LightsOrchestrator), nameof(SunsetTracker), nameof(CallSunsetAPIAsync));
-                metrics.TrackDependency(nameof(LightsOrchestrator), nameof(SunsetTracker), nameof(CallSunsetAPIAsync), sw.Elapsed, false);
-                throw new ApplicationException($"Error calling Sunset API. Type: {e.GetType()} Message: {e.Message}", e);
-            }
-            return result;
         }
     }
 }
