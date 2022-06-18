@@ -41,10 +41,13 @@ namespace LightsTester
         {
             var mockHandler = new Mock<HttpClientHandler>();
             mockHandler.Protected().Setup<Task<HttpResponseMessage>>("Send", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage()
+            .Returns(() => 
             {
-                StatusCode = statusCode,
-                Content = new StringContent(content)
+                return Task.FromResult(new HttpResponseMessage()
+                {
+                    StatusCode = statusCode,
+                    Content = new StringContent(content)
+                });
             }).Verifiable();
 
             return mockHandler;

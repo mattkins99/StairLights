@@ -5,6 +5,7 @@
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Logging.ApplicationInsights;
     using Microsoft.Extensions.Logging.EventLog;
+    using LightsOrchestrator.DAL;
 
     public class Program
     {
@@ -15,11 +16,11 @@
             {
                 RegisterTypes();
                 List<ILightsOrchestrator> orchestratorCollection = new List<ILightsOrchestrator>();
-                orchestratorCollection.Add(container.GetService<StairlightsOrchestrator>());
+                orchestratorCollection.Add(container.GetService<StairlightsOrchestrator2>());
                 orchestratorCollection.Add(container.GetService<MushroomLightsOrchestrator>());
                 foreach(ILightsOrchestrator orchestrator in orchestratorCollection)
                 {
-                    await orchestrator.SetupAsync();
+                    orchestrator.Setup();
                 }
 
                 await Task.Delay(-1);
@@ -40,14 +41,16 @@
                 .AddSingleton<ILightStatusChecker, LightStatusChecker>()
                 .AddTransient<ILightToggler, LightToggler>()
                 .AddSingleton<LightTogglerFactory>()
-                .AddSingleton<ISunsetTracker, SunsetTracker>()
+                .AddSingleton<ISunsetTracker, SunsetCacheTracker>()
                 .AddSingleton<IMetrics, AppInsightsMetricProvider>()
                 .AddSingleton<StairlightsOrchestrator>()
+                .AddSingleton<StairlightsOrchestrator2>()
                 .AddSingleton<MushroomLightsOrchestrator>()
                 .AddTransient<HttpClientHandler>()
                 .AddSingleton<IDateProvider, DateProvider>()
                 .AddTransient<Results>()
                 .AddSingleton<ILoggerFactory, LoggerFactory>()
+                .AddSingleton(typeof(IDataProvider<>), typeof(CacheFileDataProvider<>))
                 .AddLogging(logging =>
                 {
                     logging.AddFilter<ApplicationInsightsLoggerProvider>("", LogLevel.Trace);

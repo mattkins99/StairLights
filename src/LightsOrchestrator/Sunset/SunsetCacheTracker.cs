@@ -2,16 +2,13 @@ namespace LightsOrchestrator.Sunset
 {
     using System.Diagnostics;
     using System.Net;
+    using LightsOrchestrator.DAL;
+    using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
     using Newtonsoft.Json;
+    using System.Timers;
 
-    public interface ISunsetTracker
-    {
-        DailySettings Today { get; }
-        DailySettings Tomorrow { get; }
-    }
-
-    public class SunsetTracker : ISunsetTracker
+    public class SunsetCacheTracker : ISunsetTracker
     {
         private static object fetchLock = new object();
         ILogger<SunsetTracker> logger;
@@ -24,11 +21,17 @@ namespace LightsOrchestrator.Sunset
         public DailySettings tomorrowCache;
         HttpClientHandler handler;
 
+        Dictionary<DateTime, DailySettings> settingsCache = new Dictionary<DateTime, DailySettings>();
+
+        IDataProvider<DailySettings> cacheProvider;
+
+        Timer timer;
+
         public DailySettings Today 
         {
             get
             {
-                return Task.Run(() => GetSunsetAsync(this.DateTime.Now)).ConfigureAwait(false).GetAwaiter().GetResult();
+                return Task.Run(() => cacheProvider.GetDataByIdAsync(this.DateTime.Now.ToString("yyyy-MM-dd"))).ConfigureAwait(false).GetAwaiter().GetResult();
             }
         }
 
@@ -36,30 +39,48 @@ namespace LightsOrchestrator.Sunset
         {
             get
             {
-                return tomorrowCache;
+                return Task.Run(() => cacheProvider.GetDataByIdAsync(this.DateTime.Now.AddDays(1).ToString("yyyy-MM-dd"))).ConfigureAwait(false).GetAwaiter().GetResult();
             }
         }
 
-        public SunsetTracker(ILogger<SunsetTracker> logger, IDateProvider dateProvider, IConfiguration configs, IMetrics metrics)
+        public SunsetCacheTracker(ILogger<SunsetTracker> logger, IDateProvider dateProvider, IConfiguration configs, IMetrics metrics, IDataProvider<DailySettings> cacheProvider)
         {
             this.metrics = metrics;
             this.logger = logger;
             this.configs = configs;
             this.DateTime = dateProvider;
+            this.cacheProvider = cacheProvider;
+
+            initailzeCache();
+
+            this.timer = new Timer();
+            timer.Elapsed += TimerElapsedAsync;
+            timer.AutoReset = true;
+            timer.Interval = TimeSpan.FromHours(12).TotalMilliseconds;
+            timer.Start(); 
         }
 
-        private async Task<DailySettings> GetSunsetAsync(DateTime date)
+        private void initailzeCache()
         {
-            lock(fetchLock)
+            Task.Run(() => FillCache()).ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        private async void TimerElapsedAsync(object sender, ElapsedEventArgs args)
+        {
+            await FillCache();
+        }
+
+        private async Task FillCache()
+        {
+            for (int i = 0; i < 30; i++)
             {
-                if (todayCache is null || System.DateTime.Parse(date.ToString("yyyy-MM-dd")) != todayCache.Date)
+                string key = this.DateTime.Now.AddDays(i).ToString("yyyy-MM-dd");
+                if (await cacheProvider.GetDataByIdAsync(key) == null)
                 {
-                    todayCache = tomorrowCache ?? Task.Run(() => RefreshDailySettingsAsync(date)).ConfigureAwait(false).GetAwaiter().GetResult();;
-                    tomorrowCache = Task.Run(() => RefreshDailySettingsAsync(date.AddDays(1))).ConfigureAwait(false).GetAwaiter().GetResult();
+                    var dailySettings = await RefreshDailySettingsAsync(this.DateTime.Now.AddDays(i));
+                    await cacheProvider.UpcertAsync(dailySettings);
                 }
             }
-
-            return todayCache;            
         }
 
         private async Task<DailySettings> RefreshDailySettingsAsync(DateTime date)
@@ -115,7 +136,6 @@ namespace LightsOrchestrator.Sunset
             metrics.TrackDependency(nameof(LightsOrchestrator), nameof(SunsetTracker), nameof(RefreshDailySettingsAsync), sw.Elapsed, false);
             throw new ApplicationException("Unable to get Sunset data");
         }
-
 
         private async Task<HttpResponseMessage> CallSunsetAPIAsync(DateTime date, Stopwatch sw)
         {

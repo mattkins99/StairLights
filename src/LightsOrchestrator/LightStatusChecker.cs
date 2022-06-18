@@ -36,7 +36,7 @@ namespace LightsOrchestrator
                 LightStatusStates[light] = false;
             }
 
-            var result = await this.CallLightStatus(lightType, light);
+            var result = await this.CallLightStatusAsync(lightType, light);
 
             var statusCode = result.StatusCode;
             var responseBody = await result.Content?.ReadAsStringAsync();
@@ -66,7 +66,7 @@ namespace LightsOrchestrator
             return LightStatusStates[light];
         }
 
-        private async Task<HttpResponseMessage> CallLightStatus(ILightTypes lightType, int light)
+        private async Task<HttpResponseMessage> CallLightStatusAsync(ILightTypes lightType, int light)
         {
             var uri = string.Format($"{configs.BaseLightGetUri}{lightType.Controller}?{lightType.Entity}={light}");
             logger.LogTrace("Calling: GET {uri}", uri);
@@ -78,13 +78,13 @@ namespace LightsOrchestrator
             try
             {
                 result = await httpClient.SendAsync(request);
-                metrics.TrackDependency(nameof(LightsOrchestrator), nameof(LightStatusChecker), nameof(CallLightStatus), sw.Elapsed, true);
+                metrics.TrackDependency(nameof(LightsOrchestrator), nameof(LightStatusChecker), nameof(CallLightStatusAsync), sw.Elapsed, true);
             }
             catch (Exception e)
             {
                 logger.LogError(e, "Error calling Light Controller API. Type: {e.GetType()} Message: {e.Message}", e.GetType(), e.Message);
-                metrics.TrackException(e, nameof(LightsOrchestrator), nameof(LightStatusChecker), nameof(CallLightStatus));
-                metrics.TrackDependency(nameof(LightsOrchestrator), nameof(LightStatusChecker), nameof(CallLightStatus), sw.Elapsed, false);
+                metrics.TrackException(e, nameof(LightsOrchestrator), nameof(LightStatusChecker), nameof(CallLightStatusAsync));
+                metrics.TrackDependency(nameof(LightsOrchestrator), nameof(LightStatusChecker), nameof(CallLightStatusAsync), sw.Elapsed, false);
                 httpClient.Dispose();
                 httpClient = null;
                 throw new ApplicationException($"Error calling Light Controller. Type: {e.GetType()} Message: {e.Message}", e);

@@ -10,7 +10,7 @@ namespace LightsTester
     using LightsOrchestrator.Sunset;
  
     [TestClass]
-    public class StairightsOrchestratorTests
+    public class StairightsOrchestratorTests2
     {
         static TestContext testContext;
 
@@ -32,7 +32,7 @@ namespace LightsTester
                 return DateTime.Now.Add(offset);
             });
 
-            Mock<StairlightsOrchestrator> lo = new Mock<StairlightsOrchestrator>(GetStatusCheckerMock().Object, GetLightTogglerMock().Object, GetSunsetTracker().Object, GetMockLogger().Object, new Configuration(), dateTimeMock.Object) {CallBase = true};
+            Mock<StairlightsOrchestrator2> lo = new Mock<StairlightsOrchestrator2>(GetLightTogglerMock().Object, GetSunsetTracker().Object, GetMockLogger().Object, new Configuration(), dateTimeMock.Object) {CallBase = true};
             bool lightsOn = false;
             lo.Setup(x => x.ToggleLights(It.IsAny<bool>())).Callback((bool b) => 
             {
@@ -58,7 +58,7 @@ namespace LightsTester
                 return DateTime.Now.Add(offset);
             });
 
-            Mock<StairlightsOrchestrator> lo = new Mock<StairlightsOrchestrator>(GetStatusCheckerMock().Object, GetLightTogglerMock().Object, GetSunsetTracker().Object, GetMockLogger().Object, new Configuration(), dateTimeMock.Object) {CallBase = true};
+            Mock<StairlightsOrchestrator2> lo = new Mock<StairlightsOrchestrator2>(GetLightTogglerMock().Object, GetSunsetTracker().Object, GetMockLogger().Object, new Configuration(), dateTimeMock.Object) {CallBase = true};
             bool lightsOn = true;
             lo.Setup(x => x.ToggleLights(It.IsAny<bool>())).Callback((bool b) => 
             {
@@ -72,9 +72,9 @@ namespace LightsTester
             Assert.AreEqual(false, lightsOn, "Lights are not on as expected");
         }
 
-        private Mock<ILogger<StairlightsOrchestrator>> GetMockLogger()
+        private Mock<ILogger<StairlightsOrchestrator2>> GetMockLogger()
         {
-            Mock<ILogger<StairlightsOrchestrator>> mockLogger = new Mock<ILogger<StairlightsOrchestrator>>();
+            Mock<ILogger<StairlightsOrchestrator2>> mockLogger = new Mock<ILogger<StairlightsOrchestrator2>>();
             return mockLogger;
         }
 

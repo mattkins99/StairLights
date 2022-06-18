@@ -173,6 +173,7 @@ void SecureLightServer::toggleStairs(HTTPRequest * req, HTTPResponse * res)
     Serial.print("Toggling stair ");
     ResourceParameters * params = req->getParams();
     std::string stairString;
+    std::string allStairCmd;
     if (params->getQueryParameter(Stairs::StairParam, stairString))
     {
       Serial.println(stairString.c_str());
@@ -187,6 +188,19 @@ void SecureLightServer::toggleStairs(HTTPRequest * req, HTTPResponse * res)
       else
       {
         responseCode = 404;
+      }
+    }
+    else if (params->getQueryParameter("All", allStairCmd))
+    {
+      bool newState = false;
+      if (allStairCmd == "1")
+      {
+        newState = true;
+      }
+
+      for (int i = 0; i < sizeof(Stairs::stairs); i++)
+      {
+        Stairs::stairs[i] = newState;
       }
     }
     else
